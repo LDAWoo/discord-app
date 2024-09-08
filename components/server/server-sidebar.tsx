@@ -4,6 +4,12 @@ import { ChannelType } from "@prisma/client";
 import { redirect } from "next/navigation";
 import React from "react";
 import ServerHeader from "./server-header";
+import { ScrollArea } from "../ui/scroll-area";
+import { Separator } from "../ui/separator";
+import ServerSection from "./server-section";
+import { channel } from "diagnostics_channel";
+import ServerChannel from "./server-channel";
+import ServerMember from "./server-member";
 
 interface ServerSidebarProps {
     serverId: string;
@@ -51,6 +57,47 @@ const ServerSidebar = async ({ serverId }: ServerSidebarProps) => {
     return (
         <div className="flex flex-col h-full w-full bg-background text-foreground">
             <ServerHeader server={server} role={role} />
+            <ScrollArea className="flex-1 px-3">
+                <div className="mt-2">{/* <ServerBrowse /> */}</div>
+
+                <Separator className="rounded-[3px] my-2" />
+
+                {!!textChannels?.length && (
+                    <div className="mb-2">
+                        <ServerSection sectionType="channels" channelType={ChannelType.TEXT} role={role} label="Text channels" />
+                        {textChannels.map((channel) => (
+                            <ServerChannel key={channel.id} channel={channel} server={server} role={role} />
+                        ))}
+                    </div>
+                )}
+
+                {!!audioChannels?.length && (
+                    <div className="mb-2">
+                        <ServerSection sectionType="channels" channelType={ChannelType.AUDIO} role={role} label="Voice channels" />
+                        {audioChannels.map((channel) => (
+                            <ServerChannel key={channel.id} channel={channel} server={server} role={role} />
+                        ))}
+                    </div>
+                )}
+
+                {!!videoChannels?.length && (
+                    <div className="mb-2">
+                        <ServerSection sectionType="channels" channelType={ChannelType.VIDEO} role={role} label="Video channels" />
+                        {videoChannels.map((channel) => (
+                            <ServerChannel key={channel.id} channel={channel} server={server} role={role} />
+                        ))}
+                    </div>
+                )}
+
+                {!!members?.length && (
+                    <div className="mb-2">
+                        <ServerSection sectionType="members" role={role} label="Members" server={server} />
+                        {members.map((member) => (
+                            <ServerMember key={member.id} server={server} member={member} />
+                        ))}
+                    </div>
+                )}
+            </ScrollArea>
         </div>
     );
 };

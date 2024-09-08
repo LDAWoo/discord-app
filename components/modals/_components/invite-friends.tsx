@@ -1,7 +1,7 @@
+import { DiscordIcon } from "@/components/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { DiscordIcon } from "@/components/icons/discord-icon";
 
 interface Friend {
     id: string;

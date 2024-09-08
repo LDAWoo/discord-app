@@ -39,19 +39,40 @@ const ServerHeader = ({ server, role }: ServerHeaderProps) => {
                 )}
 
                 {isAdmin && (
-                    <DropdownMenuItem className="hover:!text-white hover:!bg-indigo-600 transition-all duration-500 px-3 py-2 text-sm cursor-pointer">
+                    <DropdownMenuItem
+                        onClick={() =>
+                            onOpen("editServer", {
+                                server,
+                            })
+                        }
+                        className="hover:!text-white hover:!bg-indigo-600 transition-all duration-500 px-3 py-2 text-sm cursor-pointer"
+                    >
                         Server Settings <Settings className="h-4 w-4 ml-auto" />
                     </DropdownMenuItem>
                 )}
 
                 {isAdmin && (
-                    <DropdownMenuItem className="hover:!text-white hover:!bg-indigo-600 transition-all duration-500 px-3 py-2 text-sm cursor-pointer">
+                    <DropdownMenuItem
+                        onClick={() =>
+                            onOpen("members", {
+                                server,
+                            })
+                        }
+                        className="hover:!text-white hover:!bg-indigo-600 transition-all duration-500 px-3 py-2 text-sm cursor-pointer"
+                    >
                         Manage Members <Users className="h-4 w-4 ml-auto" />
                     </DropdownMenuItem>
                 )}
 
                 {isModerator && (
-                    <DropdownMenuItem className="hover:!text-white hover:!bg-indigo-600 transition-all duration-500 px-3 py-2 text-sm cursor-pointer">
+                    <DropdownMenuItem
+                        onClick={() =>
+                            onOpen("createChannel", {
+                                server,
+                            })
+                        }
+                        className="hover:!text-white hover:!bg-indigo-600 transition-all duration-500 px-3 py-2 text-sm cursor-pointer"
+                    >
                         Create Chanel <PlusCircle className="h-4 w-4 ml-auto" />
                     </DropdownMenuItem>
                 )}
@@ -59,13 +80,27 @@ const ServerHeader = ({ server, role }: ServerHeaderProps) => {
                 {isModerator && <DropdownMenuSeparator />}
 
                 {isAdmin && (
-                    <DropdownMenuItem className="text-rose-500 hover:!text-white hover:!bg-rose-600 transition-all duration-500 px-3 py-2 text-sm cursor-pointer">
+                    <DropdownMenuItem
+                        onClick={() =>
+                            onOpen("deleteServer", {
+                                server,
+                            })
+                        }
+                        className="text-rose-500 hover:!text-white hover:!bg-rose-600 transition-all duration-500 px-3 py-2 text-sm cursor-pointer"
+                    >
                         Delete Server <Trash className="h-4 w-4 ml-auto" />
                     </DropdownMenuItem>
                 )}
 
                 {!isAdmin && (
-                    <DropdownMenuItem className="text-rose-500 hover:!text-white hover:!bg-rose-600 transition-all duration-500 px-3 py-2 text-sm cursor-pointer">
+                    <DropdownMenuItem
+                        onClick={() =>
+                            onOpen("leaveServer", {
+                                server,
+                            })
+                        }
+                        className="text-rose-500 hover:!text-white hover:!bg-rose-600 transition-all duration-500 px-3 py-2 text-sm cursor-pointer"
+                    >
                         Leave Server <LogOutIcon className="h-4 w-4 ml-auto" />
                     </DropdownMenuItem>
                 )}

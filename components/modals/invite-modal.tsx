@@ -10,7 +10,7 @@ import { InviteFriends } from "./_components/invite-friends";
 import { InviteLink } from "./_components/invite-link";
 
 const InviteModal = () => {
-    const { isOpen, type, data, onOpen } = useModal();
+    const { isOpen, type, data, onOpen, onClose } = useModal();
     const [isGenerateLink, setIsGenerateLink] = useState(false);
     const origin = useOrigin();
     const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +37,7 @@ const InviteModal = () => {
     };
 
     return (
-        <Dialog open={isModalOpen}>
+        <Dialog open={isModalOpen} onOpenChange={onClose}>
             <DialogContent className="w-[440px] bg-background shadow-[0_2px_10px_0_hsl(0_calc(1_*_0%)_0%_/_0.2)] p-0 overflow-hidden border-0 !rounded-[5px]">
                 <DialogHeader className="pt-4 px-4">
                     <DialogTitle className="text-base text-left font-semibold mr-[32px]">{!isGenerateLink ? `Invite friends to ${server?.name}` : "Server invite link"}</DialogTitle>
