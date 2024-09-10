@@ -11,8 +11,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
     }
 
     try {
-        console.log("render");
-
         const profile = await currentProfilePages(req);
         const { content, fileUrl } = req.body;
         const { conversationId } = req.query;

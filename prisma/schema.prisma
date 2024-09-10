@@ -68,9 +68,11 @@ model Member {
   conversationsInitiated Conversation[] @relation("MemberOne")
   conversationsReceived  Conversation[] @relation("MemberTwo")
 
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  Conversation Conversation[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Conversation   Conversation[]
+  participations Participant[]
 
   @@index([profileId])
   @@index([serverId])
@@ -94,6 +96,8 @@ model Channel {
   server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
 
   messages Message[]
+
+  participants Participant[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -160,4 +164,21 @@ model DirectMessage {
 
   @@index([memberId])
   @@index([conversationId])
+}
+
+model Participant {
+  id       String   @id @default(uuid())
+  joinedAt DateTime @default(now())
+  leavedAt DateTime @updatedAt
+
+  status Boolean @default(false)
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([channelId])
+  @@index([memberId])
 }

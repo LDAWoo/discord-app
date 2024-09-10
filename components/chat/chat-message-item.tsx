@@ -48,7 +48,6 @@ const ChatMessageItem = ({ content, member, message, currentMember, deleted, fil
     const router = useRouter();
     const params = useParams();
     const [isEditing, setIsEditing] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
     const { onOpen } = useModal();
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -161,7 +160,7 @@ const ChatMessageItem = ({ content, member, message, currentMember, deleted, fil
                             </div>
                         </div>
                     )}
-                    {!fileUrl && !isDeleting && (
+                    {!fileUrl && (
                         <p className={cn("text-sm text-zinc-600 dark:text-zinc-300", deleted && "italic text-zinc-500 dark:text-zinc-400 text-xs mt-1")}>
                             {content}
                             {isUpdated && !deleted && <span className="text-[10px] mx-2 text-zinc-500 dark:text-zinc-400">(edited)</span>}

@@ -4,7 +4,6 @@ import ChatMessage from "@/components/chat/chat-message";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import React from "react";
 
 interface ChannelIdPageProps {
     params: {
@@ -39,30 +38,34 @@ const ChannelIdPage = async ({ params }: ChannelIdPageProps) => {
 
     return (
         <div className="bg-accent flex flex-col h-full">
-            <ChatHeader name={channel.name} serverId={channel.serverId} type="channel" />
-            <ChatMessage
-                chatId={channel.id}
-                member={member}
-                name={channel.name}
-                type="channel"
-                apiUrl={"/api/messages"}
-                socketUrl="/api/socket/messages"
-                socketQuery={{
-                    channelId: channel.id,
-                    serverId: channel.serverId,
-                }}
-                paramValue={channel.id}
-                paramKey="channelId"
-            />
-            <ChatInput
-                name={channel.name}
-                type="channel"
-                apiUrl="/api/socket/messages"
-                query={{
-                    channelId: channel.id,
-                    serverId: channel.serverId,
-                }}
-            />
+            {channel.type !== "AUDIO" && channel.type !== "VIDEO" && (
+                <>
+                    <ChatHeader name={channel.name} serverId={channel.serverId} type="channel" />
+                    <ChatMessage
+                        chatId={channel.id}
+                        member={member}
+                        name={channel.name}
+                        type="channel"
+                        apiUrl={"/api/messages"}
+                        socketUrl="/api/socket/messages"
+                        socketQuery={{
+                            channelId: channel.id,
+                            serverId: channel.serverId,
+                        }}
+                        paramValue={channel.id}
+                        paramKey="channelId"
+                    />
+                    <ChatInput
+                        name={channel.name}
+                        type="channel"
+                        apiUrl="/api/socket/messages"
+                        query={{
+                            channelId: channel.id,
+                            serverId: channel.serverId,
+                        }}
+                    />
+                </>
+            )}
         </div>
     );
 };

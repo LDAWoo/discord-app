@@ -7,7 +7,6 @@ import ServerHeader from "./server-header";
 import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
 import ServerSection from "./server-section";
-import { channel } from "diagnostics_channel";
 import ServerChannel from "./server-channel";
 import ServerMember from "./server-member";
 
