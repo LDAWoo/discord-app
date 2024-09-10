@@ -6,6 +6,7 @@ import { Member, MemberRole, Message, Profile } from "@prisma/client";
 import axios from "axios";
 import { FileIcon, ShieldAlert, ShieldCheck } from "lucide-react";
 import Image from "next/image";
+import { useParams, useRouter } from "next/navigation";
 import qs from "query-string";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -16,7 +17,6 @@ import { Button } from "../ui/button";
 import { Form, FormControl, FormField, FormItem } from "../ui/form";
 import { Input } from "../ui/input";
 import MessageAction from "./_components/message-action";
-import { useParams, useRouter } from "next/navigation";
 
 interface ChatMessageItemProps {
     id: string;
@@ -57,6 +57,8 @@ const ChatMessageItem = ({ content, member, message, currentMember, deleted, fil
             content: "",
         },
     });
+
+    const { setFocus } = form;
 
     const onMemberClick = () => {
         if (member.id === currentMember.id) {
@@ -121,6 +123,12 @@ const ChatMessageItem = ({ content, member, message, currentMember, deleted, fil
         }
     };
 
+    useEffect(() => {
+        if (isEditing) {
+            setFocus("content");
+        }
+    }, [isEditing]);
+
     return (
         <div className="relative group flex items-center hover:bg-black/5 p-4 transition w-full">
             <div className=" group flex gap-x-2 items-start w-full">
@@ -169,7 +177,7 @@ const ChatMessageItem = ({ content, member, message, currentMember, deleted, fil
                                         <FormItem className="w-full">
                                             <FormControl>
                                                 <div className="relative w-full">
-                                                    <Input disabled={isLoading} {...field} className="h-[44px] p-[10px_16px] rounded-[8px] bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200" />
+                                                    <Input autoComplete="off" disabled={isLoading} {...field} className="h-[44px] p-[10px_16px] rounded-[8px] bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200" />
                                                 </div>
                                             </FormControl>
                                         </FormItem>

@@ -14,10 +14,16 @@ const findConversation = async (memberOneId: string, memberTwoId: string) => {
     try {
         return await db.conversation.findFirst({
             where: {
-                AND: {
-                    memberOneId,
-                    memberTwoId,
-                },
+                OR: [
+                    {
+                        memberOneId: memberOneId,
+                        memberTwoId: memberTwoId,
+                    },
+                    {
+                        memberOneId: memberTwoId,
+                        memberTwoId: memberOneId,
+                    },
+                ],
             },
             include: {
                 memberOne: {
@@ -32,7 +38,8 @@ const findConversation = async (memberOneId: string, memberTwoId: string) => {
                 },
             },
         });
-    } catch {
+    } catch (error) {
+        console.error("Error finding conversation:", error);
         return null;
     }
 };
@@ -57,7 +64,8 @@ const createNewConversation = async (memberOneId: string, memberTwoId: string) =
                 },
             },
         });
-    } catch {
+    } catch (error) {
+        console.error("Error creating conversation:", error);
         return null;
     }
 };
