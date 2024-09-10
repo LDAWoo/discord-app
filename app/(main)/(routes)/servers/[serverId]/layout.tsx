@@ -40,7 +40,7 @@ const Layout = async ({ children, params }: Props) => {
                 <ServerSidebar serverId={params.serverId} />
             </div>
 
-            <main className="h-full pl-60">{children}</main>
+            <main className="h-full pl-60 bg-accent">{children}</main>
         </div>
     );
 };
