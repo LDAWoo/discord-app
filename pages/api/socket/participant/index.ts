@@ -76,9 +76,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
             },
         });
 
-        const channelKey = `participant:${channelId}:joined`;
-
-        res?.socket?.server?.io?.emit(channelKey, participant);
+        res?.socket?.server?.io?.emit("join-channel", {
+            channelId: participant.channelId,
+            memberId: participant.memberId,
+        });
 
         return res.status(200).json(participant);
     } catch (error) {

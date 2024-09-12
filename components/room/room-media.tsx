@@ -1,19 +1,24 @@
 "use client";
 import { useChatQuery } from "@/hooks/use-chat-query";
 import { useParticipantSocket } from "@/hooks/use-participant-socket";
+import { useSocket } from "@/providers/socket-provider";
 import { Member, Participant, Profile } from "@prisma/client";
-import RoomHeader from "./room-header";
-import UserAvatar from "../global/user-avatar";
-import { Button } from "../ui/button";
-import qs from "query-string";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import qs from "query-string";
+import { Button } from "../ui/button";
+import RoomHeader from "./room-header";
 import RoomItem from "./room-item";
+import { useMediaStream } from "@/hooks/use-media-stream";
+import { useEffect, useState } from "react";
+import { useFeer } from "@/hooks/use-feer";
+import { usePlayer } from "@/hooks/use-player";
+import RoomPlayer from "./room-player";
+import { cloneDeep } from "lodash";
 
 interface RoomMediaProps {
     name: string;
-    imageUrl: string;
-    member: Member;
+    serverId: string;
     channelId: string;
     apiUrl: string;
     socketUrl: string;
@@ -21,6 +26,7 @@ interface RoomMediaProps {
     paramValue: string;
     paramKey: "channelId";
     type: "channel";
+    member: Member;
 }
 
 type ParticipantWithMemberWithProfile = Participant & {
@@ -29,18 +35,22 @@ type ParticipantWithMemberWithProfile = Participant & {
     };
 };
 
-const RoomMedia = ({ apiUrl, channelId, imageUrl, name, paramValue, paramKey, socketQuery, socketUrl }: RoomMediaProps) => {
+const RoomMedia = ({ apiUrl, name, member, channelId, serverId, paramValue, paramKey, socketQuery, socketUrl }: RoomMediaProps) => {
     const router = useRouter();
-    const queryKey = `participant:${channelId}`;
-    const addKey = `participant:${channelId}:joined`;
-    const updateKey = `participant:${channelId}:update`;
-
-    const { data } = useChatQuery({
-        queryKey,
-        apiUrl,
-        paramKey,
-        paramValue,
+    const { socket } = useSocket();
+    const { stream } = useMediaStream();
+    const { myId, peer } = useFeer(channelId);
+    const { players, setPlayers, playerHighlighted, nonHighlightedPlayers, toggleAudio, toggleVideo, leaveRoom } = usePlayer({
+        myId,
+        channelId,
+        serverId,
+        peer,
     });
+
+    const { id } = member;
+    const queryKey = `participant:${channelId}`;
+    const addKey = `join-channel`;
+    const updateKey = `participant:${channelId}:update`;
 
     useParticipantSocket({
         queryKey,
@@ -48,7 +58,13 @@ const RoomMedia = ({ apiUrl, channelId, imageUrl, name, paramValue, paramKey, so
         updateKey,
     });
 
-    console.log(data);
+    const [users, setUsers] = useState([]);
+    // const { data } = useChatQuery({
+    //     queryKey,
+    //     apiUrl,
+    //     paramKey,
+    //     paramValue,
+    // });
 
     const handleJoin = async () => {
         try {
@@ -56,49 +72,145 @@ const RoomMedia = ({ apiUrl, channelId, imageUrl, name, paramValue, paramKey, so
                 url: socketUrl,
                 query: socketQuery,
             });
-
             await axios.post(url);
-            router.refresh();
         } catch (error) {
             console.log(error);
         }
     };
 
+    useEffect(() => {
+        if (!socket || !stream || !peer) return;
+
+        const handleConnectedChannel = (memberId: string) => {
+            console.log(`Received join-channel event for member ${memberId}`);
+
+            const call = peer.call(memberId, stream);
+
+            call.on("stream", (incomingStream) => {
+                console.log(`incoming stream from ${memberId}`);
+                setPlayers((prev) => ({
+                    ...prev,
+                    [memberId]: {
+                        url: incomingStream,
+                        muted: true,
+                        playing: true,
+                    },
+                }));
+
+                setUsers((prev) => ({
+                    ...prev,
+                    [memberId]: call,
+                }));
+            });
+        };
+
+        socket.on("member-connected", handleConnectedChannel);
+
+        return () => {
+            socket.off("member-connected", handleConnectedChannel);
+        };
+    }, [socket, peer, stream, myId]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleToggleAudio = (memberId: string) => {
+            setPlayers((prev) => {
+                const copy = cloneDeep(prev);
+                copy[memberId].muted = !copy[memberId].muted;
+                return {
+                    ...copy,
+                };
+            });
+        };
+
+        const handleToggleVideo = (memberId: string) => {
+            setPlayers((prev) => {
+                const copy = cloneDeep(prev);
+                copy[memberId].playing = !copy[memberId].playing;
+                return {
+                    ...copy,
+                };
+            });
+        };
+
+        const handleMemberLeave = (memberId: string) => {
+            users[memberId]?.close();
+
+            const playersCopy = cloneDeep(players);
+            delete playersCopy[memberId];
+            setPlayers(playersCopy);
+        };
+
+        socket.on("member-toggle-audio", handleToggleAudio);
+        socket.on("member-toggle-video", handleToggleVideo);
+        socket.on("member-leave", handleMemberLeave);
+
+        return () => {
+            socket.off("member-toggle-audio", handleToggleAudio);
+            socket.off("member-toggle-video", handleToggleVideo);
+            socket.off("member-leave", handleMemberLeave);
+        };
+    }, [players, socket, users]);
+
+    useEffect(() => {
+        if (!peer || !stream) return;
+        peer.on("call", (call) => {
+            const { peer: callerId } = call;
+            call.answer(stream);
+
+            call.on("stream", (incomingStream) => {
+                console.log(`incoming stream from ${callerId}`);
+                setPlayers((prev) => ({
+                    ...prev,
+                    [callerId]: {
+                        url: incomingStream,
+                        muted: true,
+                        playing: true,
+                    },
+                }));
+                setUsers((prev) => ({
+                    ...prev,
+                    [callerId]: call,
+                }));
+            });
+        });
+    }, [peer, stream]);
+
+    useEffect(() => {
+        if (!stream || !myId) return;
+        console.log(`setting my stream ${myId}`);
+        setPlayers((prev) => ({
+            ...prev,
+            [myId]: {
+                url: stream,
+                muted: true,
+                playing: true,
+            },
+        }));
+    }, [stream, myId]);
+
+    console.log(players);
+
     return (
-        <div className="relative group bg-white dark:bg-black w-full h-full">
+        <div className="relative group bg-white dark:bg-black w-full h-full overflow-hidden">
             <RoomHeader name={name} />
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[2] h-[160px] absolute top-0 left-0 right-0 bg-gradient" />
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[2] h-[160px] absolute bottom-0 left-0 right-0 bg-gradient" />
-            <div className="absolute inset-[60px_0px_56px_8px] contain-layout">
-                <div className="flex flex-wrap justify-center">
-                    <div className="w-[528px] mb-[8px] flex items-center">
-                        <div className="aspect-[16/9] w-full bg-secondary rounded-xl">
-                            <div className="relative h-full w-full dark:bg-[#3c3d38] rounded-xl overflow-hidden">
-                                <div className="flex h-full items-center justify-center">
-                                    <UserAvatar src={imageUrl} className="object-cover h-[80px] w-[80px]" />
-                                </div>
-                                <div className="absolute left-2 bottom-2 bg-white dark:bg-zinc-900 rounded-lg p-[4px_12px] text-primary">
-                                    <span className="text-sm">{name}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[2] h-[160px] absolute bottom-0 left-0 right-0 bg-gradient rotate-180" />
+            <div className="absolute inset-[60px_0px_56px_8px] contain-layout overflow-y-auto">
+                <div className="flex flex-wrap justify-center gap-2">
+                    {Object.entries(nonHighlightedPlayers).map(([playerId, player]) => {
+                        return <RoomItem key={playerId} name={playerId === myId ? "V" : "H"} stream={player.url} muted={player.muted} playing={player.playing} />;
+                    })}
+                </div>
 
-                    {data?.pages[0]?.items.map((participant: ParticipantWithMemberWithProfile) => (
-                        <div key={participant.id}>
-                            <RoomItem
-                                participant={participant}
-                                isLocalParticipant={false} // Compare participant ID with current user's ID
-                            />
-                        </div>
-                    ))}
-                </div>
-                <div className="flex justify-center mt-[24px]">
-                    <Button onClick={handleJoin} className="px-2 rounded-full  w-[96px] bg-green-700 hover:bg-green-800 transition text-white font-normal text-sm">
-                        Join Video
-                    </Button>
-                </div>
+                {playerHighlighted && (
+                    <div className="flex flex-wrap justify-center gap-2">
+                        <RoomItem name={"H"} stream={playerHighlighted.url} muted={playerHighlighted.muted} playing={playerHighlighted.playing} />
+                    </div>
+                )}
             </div>
+            <RoomPlayer muted={playerHighlighted?.muted} playing={playerHighlighted?.playing} onToggleAudio={toggleAudio} onToggleVideo={toggleVideo} onLeave={leaveRoom} />
         </div>
     );
 };

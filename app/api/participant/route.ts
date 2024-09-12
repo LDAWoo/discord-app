@@ -46,6 +46,7 @@ export async function GET(req: Request) {
             participants = await db.participant.findMany({
                 where: {
                     channelId,
+                    status: true,
                 },
                 include: {
                     member: {

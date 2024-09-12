@@ -1,6 +1,7 @@
 import ChatHeader from "@/components/chat/chat-header";
 import ChatInput from "@/components/chat/chat-input";
 import ChatMessage from "@/components/chat/chat-message";
+import RoomMedia from "@/components/room/room-media";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
@@ -38,6 +39,26 @@ const ChannelIdPage = async ({ params }: ChannelIdPageProps) => {
 
     return (
         <div className="bg-accent flex flex-col h-full">
+            {channel.type === "AUDIO" ||
+                (channel.type === "VIDEO" && (
+                    <>
+                        <RoomMedia
+                            type="channel"
+                            name={channel.name}
+                            member={member}
+                            channelId={channel.id}
+                            serverId={channel.serverId}
+                            apiUrl="/api/participant"
+                            socketUrl="/api/socket/participant"
+                            socketQuery={{
+                                channelId: channel.id,
+                                serverId: channel.serverId,
+                            }}
+                            paramValue={channel.id}
+                            paramKey="channelId"
+                        />
+                    </>
+                ))}
             {channel.type !== "AUDIO" && channel.type !== "VIDEO" && (
                 <>
                     <ChatHeader name={channel.name} serverId={channel.serverId} type="channel" />

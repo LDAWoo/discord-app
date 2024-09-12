@@ -11,58 +11,21 @@ type ParticipantSocketProps = {
     queryKey: string;
 };
 
-type ParticipantWithMemberWithProfile = Participant & {
-    profile: Profile;
-};
-
 export const useParticipantSocket = ({ addKey, updateKey, queryKey }: ParticipantSocketProps) => {
     const { socket } = useSocket();
     const queryClient = useQueryClient();
+
+    console.log("render ...");
 
     useEffect(() => {
         if (!socket) {
             return;
         }
 
-        // Xử lý sự kiện cập nhật participant
-        socket.on(updateKey, (participant: ParticipantWithMemberWithProfile) => {
-            queryClient.setQueryData([queryKey], (oldData: any) => {
-                if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-                    return oldData;
-                }
-
-                const newData = oldData.pages.map((page: any) => ({
-                    ...page,
-                    items: page.items.map((item: ParticipantWithMemberWithProfile) => (item.id === participant.id ? participant : item)),
-                }));
-
-                return {
-                    ...oldData,
-                    pages: newData,
-                };
-            });
-        });
-
-        // Xử lý sự kiện thêm participant mới
-        socket.on(addKey, (participant: ParticipantWithMemberWithProfile) => {
-            queryClient.setQueryData([queryKey], (oldData: any) => {
-                if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-                    return {
-                        pages: [{ items: [participant] }],
-                    };
-                }
-
-                const newData = [...oldData.pages];
-                newData[0] = {
-                    ...newData[0],
-                    items: [participant, ...newData[0].items],
-                };
-
-                return {
-                    ...oldData,
-                    pages: newData,
-                };
-            });
+        // Xử lý sự kiện join-channel
+        socket.on(addKey, (data: { channelId: string; memberId: string }) => {
+            console.log(`a new member ${data.memberId} joined channel ${data.channelId}`);
+            // Không cần emit "member-connected" ở đây, server sẽ xử lý việc đó
         });
 
         // Cleanup function
